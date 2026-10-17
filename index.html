@@ -338,6 +338,7 @@
                 <th class="py-3 px-4">簽到時間</th>
                 <th class="py-3 px-4">簽退時間</th>
                 <th class="py-3 px-4">狀態</th>
+                <th class="py-3 px-4 text-center">操作</th>
               </tr>
             </thead>
             <tbody id="admin-table-body" class="divide-y divide-slate-100 bg-white">
@@ -425,6 +426,73 @@
     </div>
   </div>
 
+  <!-- 編輯學員資料 Modal -->
+  <div id="modal-edit-student" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 opacity-0 pointer-events-none transition-opacity duration-200">
+    <div id="modal-edit-card" class="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-xl transform scale-95 transition-transform duration-200 space-y-5">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-user-pen text-indigo-600"></i>
+          編輯學員簽到資料
+        </h3>
+        <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-600 text-sm px-2">✕</button>
+      </div>
+      <form onsubmit="handleEditStudentSubmit(event)" class="space-y-4">
+        <input type="hidden" id="edit-old-id">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">班級</label>
+          <input type="text" id="edit-class" required class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 text-xs text-slate-800">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">學號</label>
+          <input type="text" id="edit-id" required class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 text-xs font-mono text-slate-800">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">姓名</label>
+          <input type="text" id="edit-name" required class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 text-xs text-slate-800">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">簽到時間 (HH:mm)</label>
+            <input type="text" id="edit-checkin-time" required class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 text-xs font-mono text-slate-800">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">簽退時間 (選填)</label>
+            <input type="text" id="edit-checkout-time" placeholder="未簽退" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 text-xs font-mono text-slate-800">
+          </div>
+        </div>
+        <div class="flex gap-2 pt-2">
+          <button type="button" onclick="closeEditModal()" class="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-xs transition">
+            取消
+          </button>
+          <button type="submit" class="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition shadow-md shadow-indigo-600/10">
+            儲存修改
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 刪除確認 Modal -->
+  <div id="modal-confirm-delete" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 opacity-0 pointer-events-none transition-opacity duration-200">
+    <div id="modal-delete-card" class="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 max-w-sm w-full text-center shadow-xl transform scale-95 transition-transform duration-200 space-y-4">
+      <div class="w-14 h-14 rounded-2xl bg-rose-50 border border-rose-100 text-rose-600 flex items-center justify-center text-xl mx-auto">
+        <i class="fa-solid fa-trash-can"></i>
+      </div>
+      <div>
+        <h3 class="text-base font-bold text-slate-900">確定要刪除紀錄？</h3>
+        <p id="delete-target-text" class="text-xs sm:text-sm text-slate-500 mt-1.5 leading-relaxed">請確認是否刪除該學員的簽到紀錄。</p>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="closeConfirmDeleteModal()" class="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-xs transition">
+          取消
+        </button>
+        <button onclick="executeDeleteRecord()" class="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs transition shadow-md shadow-rose-600/10">
+          確認刪除
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const DEFAULT_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxQOQHrJj_7N1qfB0mzPsAvlh923IMTPHwYFnXBYSwZUYL9zEmq0Y4ET49Hpf0hdtaY/exec";
     let records = []; 
@@ -433,6 +501,14 @@
     let webhookUrl = DEFAULT_WEBHOOK_URL; 
     let syncInterval = null;
     let isAdminAuthenticated = false;
+
+    // 格式化時間為 HH:mm (不再包含台北標準時間與秒數)
+    function getShortTime() {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      return `${hours}:${minutes}`;
+    }
 
     window.onload = function() {
       loadLocalData();
@@ -527,11 +603,94 @@
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: payload
         });
-        setTimeout(() => fetchCloudData(false), 1000);
+        setTimeout(() => fetchCloudData(false), 800);
       } catch (err) {
         console.error("sendGasAction error:", err);
         updateCloudStatus('error');
       }
+    }
+
+    async function handleCheckin(e) {
+      e.preventDefault();
+      const className = document.getElementById('checkin-class').value;
+      if (!className) {
+        showModal('請選擇班級', '請選擇您的班級名稱後再進行簽到！', 'warning');
+        return;
+      }
+      const studentId = document.getElementById('checkin-id').value.trim();
+      const studentName = document.getElementById('checkin-name').value.trim();
+
+      // 檢查是否已存在簽到紀錄 (防重複簽到)
+      const existing = records.find(r => String(r.studentId).trim() === String(studentId).trim());
+      if (existing) {
+        showModal('重複簽到提醒', `學號【${studentId}】已於 ${existing.checkinTime} 完成簽到，無需重複登記！`, 'warning');
+        return;
+      }
+
+      const timeString = getShortTime();
+
+      const newRecord = {
+        id: Date.now(),
+        className: className,
+        studentId: studentId,
+        studentName: studentName,
+        checkinTime: timeString,
+        checkoutTime: null
+      };
+
+      records.unshift(newRecord);
+      saveLocalData();
+      renderAdminTable();
+      sendGasAction('checkin', newRecord);
+
+      document.getElementById('checkin-class').value = '';
+      document.getElementById('checkin-id').value = '';
+      document.getElementById('checkin-name').value = '';
+
+      showModal('簽到成功！', `恭喜 ${studentName} (${className}) 完成簽到登記！`, 'success');
+    }
+
+    function openGoogleForm() {
+      if (!googleFormUrl) {
+        showModal('提示', '後台尚未設定 Google 問卷網址。', 'warning');
+        return;
+      }
+      window.open(googleFormUrl, '_blank');
+    }
+
+    async function handleCheckout(e) {
+      e.preventDefault();
+      const studentId = document.getElementById('checkout-id').value.trim();
+      const surveyConfirmed = document.getElementById('survey-confirmed').checked;
+
+      if (!surveyConfirmed) {
+        showModal('問卷未勾選', '請點擊開啟 Google 問卷完成填寫，並勾選確認方可進行簽退！', 'warning');
+        return;
+      }
+
+      const record = records.find(r => String(r.studentId).trim() === String(studentId).trim());
+      if (!record) {
+        showModal('查無簽到紀錄', `找不到學號【${studentId}】的簽到紀錄，請確認學號輸入是否正確或先前往簽到！`, 'error');
+        return;
+      }
+
+      // 防重複簽退判斷
+      if (record.checkoutTime) {
+        showModal('重複簽退提醒', `學號【${studentId}】已於 ${record.checkoutTime} 完成簽退，請勿重複提交！`, 'warning');
+        return;
+      }
+
+      const timeString = getShortTime();
+      record.checkoutTime = timeString;
+
+      saveLocalData();
+      renderAdminTable();
+      sendGasAction('checkout', { studentId: studentId, checkoutTime: timeString });
+
+      document.getElementById('checkout-id').value = '';
+      document.getElementById('survey-confirmed').checked = false;
+
+      showModal('簽退成功！', `${record.studentName} 學員已成功完成課堂簽退與問卷提交！`, 'success');
     }
 
     function saveLocalData() {
@@ -748,7 +907,7 @@
       );
 
       if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400 font-normal">尚無符合條件的簽到紀錄</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400 font-normal">尚無符合條件的簽到紀錄</td></tr>`;
         return;
       }
 
@@ -765,8 +924,122 @@
               : `<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-50 text-indigo-600 border border-indigo-200">上課中</span>`
             }
           </td>
+          <td class="py-3 px-4 text-center">
+            <div class="flex items-center justify-center gap-1.5">
+              <button onclick="openEditModal('${r.studentId}')" class="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition" title="編輯資料">
+                <i class="fa-solid fa-pen-to-square"></i>
+              </button>
+              <button onclick="confirmDeleteRecord('${r.studentId}')" class="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition" title="刪除紀錄">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </div>
+          </td>
         </tr>
       `).join('');
+    }
+
+    // 編輯紀錄 Modal 控制
+    function openEditModal(studentId) {
+      const record = records.find(r => String(r.studentId) === String(studentId));
+      if (!record) return;
+
+      document.getElementById('edit-old-id').value = record.studentId;
+      document.getElementById('edit-class').value = record.className || '';
+      document.getElementById('edit-id').value = record.studentId;
+      document.getElementById('edit-name').value = record.studentName || '';
+      document.getElementById('edit-checkin-time').value = record.checkinTime || '';
+      document.getElementById('edit-checkout-time').value = record.checkoutTime || '';
+
+      const modal = document.getElementById('modal-edit-student');
+      const card = document.getElementById('modal-edit-card');
+      modal.classList.remove('opacity-0', 'pointer-events-none');
+      card.classList.remove('scale-95');
+      card.classList.add('scale-100');
+    }
+
+    function closeEditModal() {
+      const modal = document.getElementById('modal-edit-student');
+      const card = document.getElementById('modal-edit-card');
+      modal.classList.add('opacity-0', 'pointer-events-none');
+      card.classList.remove('scale-100');
+      card.classList.add('scale-95');
+    }
+
+    async function handleEditStudentSubmit(e) {
+      e.preventDefault();
+      const oldStudentId = document.getElementById('edit-old-id').value;
+      const newClass = document.getElementById('edit-class').value.trim();
+      const newId = document.getElementById('edit-id').value.trim();
+      const newName = document.getElementById('edit-name').value.trim();
+      const checkinTime = document.getElementById('edit-checkin-time').value.trim();
+      const checkoutTime = document.getElementById('edit-checkout-time').value.trim();
+
+      const record = records.find(r => String(r.studentId) === String(oldStudentId));
+      if (record) {
+        record.className = newClass;
+        record.studentId = newId;
+        record.studentName = newName;
+        record.checkinTime = checkinTime;
+        record.checkoutTime = checkoutTime ? checkoutTime : null;
+
+        saveLocalData();
+        renderAdminTable();
+        closeEditModal();
+
+        sendGasAction('editRecord', {
+          oldStudentId: oldStudentId,
+          className: newClass,
+          studentId: newId,
+          studentName: newName,
+          checkinTime: checkinTime,
+          checkoutTime: checkoutTime
+        });
+
+        showModal('修改成功', `已更新學員 ${newName} (${newId}) 的紀錄！`, 'success');
+      }
+    }
+
+    // 刪除紀錄 Modal 控制
+    let pendingDeleteStudentId = null;
+
+    function confirmDeleteRecord(studentId) {
+      const record = records.find(r => String(r.studentId) === String(studentId));
+      if (!record) return;
+
+      pendingDeleteStudentId = studentId;
+      document.getElementById('delete-target-text').innerText = `確定要刪除學員 【${record.studentName} (${record.studentId})】 的簽到紀錄嗎？此操作不可復原。`;
+
+      const modal = document.getElementById('modal-confirm-delete');
+      const card = document.getElementById('modal-delete-card');
+      modal.classList.remove('opacity-0', 'pointer-events-none');
+      card.classList.remove('scale-95');
+      card.classList.add('scale-100');
+    }
+
+    function closeConfirmDeleteModal() {
+      pendingDeleteStudentId = null;
+      const modal = document.getElementById('modal-confirm-delete');
+      const card = document.getElementById('modal-delete-card');
+      modal.classList.add('opacity-0', 'pointer-events-none');
+      card.classList.remove('scale-100');
+      card.classList.add('scale-95');
+    }
+
+    async function executeDeleteRecord() {
+      if (!pendingDeleteStudentId) return;
+
+      const targetId = pendingDeleteStudentId;
+      const targetRecord = records.find(r => String(r.studentId) === String(targetId));
+      const targetName = targetRecord ? targetRecord.studentName : targetId;
+
+      records = records.filter(r => String(r.studentId) !== String(targetId));
+      saveLocalData();
+      renderAdminTable();
+      closeConfirmDeleteModal();
+
+      sendGasAction('deleteRecord', { studentId: targetId });
+
+      showModal('刪除成功', `已順利刪除學員 ${targetName} 的簽到紀錄。`, 'success');
     }
 
     function saveGFormUrl() {
