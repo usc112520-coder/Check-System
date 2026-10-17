@@ -347,6 +347,36 @@
           </table>
         </div>
       </section>
+
+      <!-- 4. 簽退完成感謝頁面 -->
+      <section id="panel-thankyou" class="bg-white border border-slate-200 rounded-3xl p-8 sm:p-12 shadow-sm text-center space-y-6 hidden">
+        <div class="w-20 h-20 mx-auto rounded-3xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 text-3xl shadow-sm">
+          <i class="fa-solid fa-heart"></i>
+        </div>
+
+        <div class="space-y-3">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold">
+            <i class="fa-solid fa-circle-check"></i>
+            <span>簽退流程已完成</span>
+          </span>
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            謝謝參與
+          </h2>
+          <p class="text-base sm:text-lg text-slate-600 font-medium max-w-md mx-auto leading-relaxed">
+            希望此場分享能帶給你莫大的收穫！
+          </p>
+        </div>
+
+        <div id="thankyou-student-info" class="bg-slate-50 border border-slate-200 rounded-2xl p-4 max-w-sm mx-auto text-xs text-slate-600 space-y-1">
+          <!-- 動態載入簽退學員摘要資訊 -->
+        </div>
+
+        <div class="pt-2">
+          <button onclick="switchTab('checkin')" class="px-6 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
+            返回首頁
+          </button>
+        </div>
+      </section>
     </main>
 
     <footer class="border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-400">
@@ -690,7 +720,20 @@
       document.getElementById('checkout-id').value = '';
       document.getElementById('survey-confirmed').checked = false;
 
+      // 渲染感謝分頁中的個人簽退摘要
+      const infoBox = document.getElementById('thankyou-student-info');
+      if (infoBox) {
+        infoBox.innerHTML = `
+          <p class="font-bold text-slate-800 mb-1">${record.studentName} (${record.className || '未填寫'})</p>
+          <p><b>學號：</b><span class="font-mono">${record.studentId}</span></p>
+          <p><b>簽退時間：</b><span class="font-mono">${timeString}</span></p>
+        `;
+      }
+
       showModal('簽退成功！', `${record.studentName} 學員已成功完成課堂簽退與問卷提交！`, 'success');
+      
+      // 切換至「謝謝參與」專屬畫面
+      switchTab('thankyou');
     }
 
     function saveLocalData() {
@@ -735,7 +778,7 @@
         return;
       }
 
-      const tabs = ['checkin', 'checkout', 'admin'];
+      const tabs = ['checkin', 'checkout', 'admin', 'thankyou'];
       tabs.forEach(t => {
         const btn = document.getElementById(`nav-${t}`);
         const panel = document.getElementById(`panel-${t}`);
