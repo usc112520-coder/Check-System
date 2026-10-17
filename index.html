@@ -4,12 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>學員簽到簽退與問卷管理系統</title>
+
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Google Font: Inter -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
   <script>
     tailwind.config = {
       theme: {
@@ -30,6 +32,7 @@
       }
     }
   </script>
+
   <style>
     .custom-scrollbar::-webkit-scrollbar {
       width: 6px;
@@ -47,7 +50,6 @@
 <body class="h-full text-slate-800 bg-slate-50 flex flex-col justify-between custom-scrollbar selection:bg-indigo-500 selection:text-white antialiased">
 
   <div class="min-h-screen flex flex-col">
-    <!-- 頂部頁首 (明亮風格) -->
     <header class="border-b border-slate-200/80 bg-white/90 backdrop-blur-md sticky top-0 z-30 shadow-sm">
       <div class="max-w-4xl mx-auto px-4 py-3.5 flex items-center justify-between">
         <div class="flex items-center gap-3">
@@ -62,7 +64,7 @@
           </div>
         </div>
 
-        <!-- 開放狀態標籤 (動態) 與隱藏後台入口 -->
+        <!-- 狀態標籤與隱藏後台入口 -->
         <div class="flex items-center gap-2">
           <!-- 雲端同步狀態標籤 -->
           <div id="status-cloud-badge" onclick="fetchCloudData(true)" class="px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 bg-slate-100 text-slate-600 border border-slate-200 cursor-pointer hover:bg-slate-200 transition" title="點擊手動同步雲端資料">
@@ -74,7 +76,8 @@
             <span class="w-2 h-2 rounded-full bg-rose-500"></span>
             <span>簽退未開放</span>
           </div>
-          <!-- 開發者隱藏後台按鈕 (微型灰色齒輪圖示) -->
+
+          <!-- 後台入口按鈕 -->
           <button id="nav-admin-secret" onclick="switchTab('admin')" title="後台管理控制台" class="w-7 h-7 rounded-lg text-slate-300 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center transition-colors text-xs">
             <i class="fa-solid fa-gear"></i>
           </button>
@@ -82,10 +85,7 @@
       </div>
     </header>
 
-    <!-- 主要內容區 -->
     <main class="flex-grow max-w-3xl mx-auto w-full px-4 py-6 sm:py-8 flex flex-col">
-      
-      <!-- 功能頁籤分頁按鈕 (僅保留學員用的簽到與簽退) -->
       <nav class="bg-slate-200/60 p-1.5 rounded-2xl border border-slate-200 flex gap-1 mb-6">
         <button id="nav-checkin" onclick="switchTab('checkin')" class="flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 bg-indigo-600 text-white shadow-sm flex items-center justify-center gap-2">
           <i class="fa-solid fa-signature"></i>
@@ -109,7 +109,7 @@
         </div>
 
         <form onsubmit="handleCheckin(event)" class="space-y-5">
-          <!-- 班級 (必填下拉選單) -->
+          <!-- 班級選單 -->
           <div>
             <div class="flex items-center justify-between mb-2">
               <label for="checkin-class" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
@@ -137,7 +137,7 @@
             </div>
           </div>
 
-          <!-- 學號 -->
+          <!-- 學號與姓名 -->
           <div>
             <label for="checkin-id" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
               學號 <span class="text-rose-500">*</span>
@@ -146,11 +146,10 @@
               <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                 <i class="fa-solid fa-id-card"></i>
               </span>
-              <input type="text" id="checkin-id" required placeholder="例如：11108201" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 text-slate-800 placeholder-slate-400 text-sm transition font-mono">
+              <input type="text" id="checkin-id" required placeholder="例如：114520001" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 text-slate-800 placeholder-slate-400 text-sm transition font-mono">
             </div>
           </div>
 
-          <!-- 姓名 -->
           <div>
             <label for="checkin-name" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
               姓名 <span class="text-rose-500">*</span>
@@ -172,8 +171,7 @@
 
       <!-- 2. 學員簽退與問卷頁面 -->
       <section id="panel-checkout" class="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6 hidden">
-        
-        <!-- 簽退關閉狀態顯示 -->
+        <!-- 簽退關閉檢視 -->
         <div id="checkout-locked-view" class="text-center py-10 px-4 space-y-4">
           <div class="w-16 h-16 mx-auto rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-500 text-2xl">
             <i class="fa-solid fa-lock"></i>
@@ -191,7 +189,7 @@
           </div>
         </div>
 
-        <!-- 簽退開放狀態表單 -->
+        <!-- 簽退開放檢視 -->
         <div id="checkout-open-view" class="space-y-6 hidden">
           <div class="border-b border-slate-100 pb-4">
             <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold mb-2">
@@ -205,7 +203,7 @@
             <p class="text-xs sm:text-sm text-slate-500 mt-1">請輸入學號核對，並點擊下方連結完成 Google 問卷填寫。</p>
           </div>
 
-          <!-- 外接 Google 問卷橫幅引導區 -->
+          <!-- 外接問卷卡片 -->
           <div class="bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-100 rounded-2xl p-5 space-y-3">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div class="flex items-start gap-3.5">
@@ -224,7 +222,6 @@
             </div>
           </div>
 
-          <!-- 簽退表單 -->
           <form onsubmit="handleCheckout(event)" class="space-y-5">
             <div>
               <label for="checkout-id" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
@@ -238,7 +235,6 @@
               </div>
             </div>
 
-            <!-- 完成問卷確認勾選 -->
             <div class="flex items-center gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
               <input type="checkbox" id="survey-confirmed" required class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500/20 border-slate-300 cursor-pointer">
               <label for="survey-confirmed" class="text-xs text-slate-700 cursor-pointer select-none">
@@ -252,7 +248,6 @@
             </button>
           </form>
         </div>
-
       </section>
 
       <!-- 3. 後台管理控制台 -->
@@ -271,9 +266,8 @@
           </button>
         </div>
 
-        <!-- 後台核心控制卡片區 -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- 簽退開關控制 -->
+          <!-- 簽退權限開關 -->
           <div class="bg-slate-50 border border-slate-200 p-5 rounded-2xl flex items-center justify-between">
             <div class="space-y-1">
               <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">簽退權限開關</div>
@@ -286,7 +280,7 @@
             </label>
           </div>
 
-          <!-- Google 問卷網址設定 -->
+          <!-- 問卷網址設定 -->
           <div class="bg-slate-50 border border-slate-200 p-5 rounded-2xl space-y-2">
             <label for="input-gform-url" class="block text-xs font-semibold text-slate-500 uppercase tracking-wider">
               外接 Google 問卷網址
@@ -300,7 +294,6 @@
           </div>
         </div>
 
-        <!-- 數據指標卡片 -->
         <div class="grid grid-cols-3 gap-3 sm:gap-4">
           <div class="bg-slate-50 border border-slate-200 p-4 rounded-2xl text-center">
             <div class="text-xs text-slate-500 font-medium">應到 / 簽到人數</div>
@@ -316,7 +309,6 @@
           </div>
         </div>
 
-        <!-- 搜尋與導出操作列 -->
         <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
           <div class="relative w-full sm:w-64">
             <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 text-xs">
@@ -336,7 +328,6 @@
           </div>
         </div>
 
-        <!-- 簽到紀錄表格 -->
         <div class="overflow-x-auto rounded-2xl border border-slate-200 custom-scrollbar">
           <table class="w-full text-left text-xs text-slate-700">
             <thead class="bg-slate-100 text-slate-600 uppercase text-[10px] tracking-wider border-b border-slate-200">
@@ -355,16 +346,14 @@
           </table>
         </div>
       </section>
-
     </main>
 
-    <!-- 頁尾 -->
     <footer class="border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-400">
       <p>© 2026 學員簽到簽退與問卷管理系統 • 明亮極簡版</p>
     </footer>
   </div>
 
-  <!-- 通用提示 Modal (代替原生 alert) -->
+  <!-- 通用提示 Modal -->
   <div id="modal-alert" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 opacity-0 pointer-events-none transition-opacity duration-200">
     <div id="modal-card" class="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 max-w-sm w-full text-center shadow-xl transform scale-95 transition-transform duration-200 space-y-4">
       <div id="modal-icon-container" class="w-14 h-14 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center text-xl mx-auto">
@@ -407,7 +396,7 @@
     </div>
   </div>
 
-  <!-- Google Apps Script 教學與設定 Modal -->
+  <!-- GAS 設定 Modal -->
   <div id="modal-gas" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 opacity-0 pointer-events-none transition-opacity duration-200">
     <div class="bg-white border border-slate-200 rounded-3xl p-6 max-w-2xl w-full shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -421,123 +410,11 @@
       <div class="space-y-3 text-xs text-slate-600 overflow-y-auto custom-scrollbar pr-2 flex-grow">
         <p class="text-slate-500">貼上此 GAS 程式碼後部署為網頁應用程式（權限設為<b>「所有人/Anyone」</b>），即可實現所有手機與電腦間的<b>實時同步簽到簽退</b>！</p>
 
-        <!-- Webhook 輸入框 -->
         <div class="space-y-1 pt-1">
           <label class="block text-[11px] font-semibold text-indigo-600 uppercase">1. 填入您的 Google Apps Script Web App 網址：</label>
           <div class="flex gap-2">
             <input type="url" id="input-webhook-url" placeholder="https://script.google.com/macros/s/.../exec" class="flex-grow px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 font-mono text-slate-800 text-xs">
             <button onclick="saveWebhookUrl()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold transition shrink-0">儲存並立即同步</button>
-          </div>
-        </div>
-
-        <div class="space-y-1">
-          <label class="block text-[11px] font-semibold text-indigo-600 uppercase">2. 全功能 GAS 後端程式碼（同時支援讀取與寫入）：</label>
-          <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 font-mono text-[11px] text-emerald-400 overflow-x-auto">
-<pre><code>// GAS 後端核心 - 支援跨裝置同步與設定存取
-function doGet(e) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var recSheet = getOrCreateSheet(ss, "簽到紀錄", ["班級", "學號", "姓名", "簽到時間", "簽退時間"]);
-  var setSheet = getOrCreateSheet(ss, "系統設定", ["Key", "Value"]);
-
-  var data = recSheet.getDataRange().getValues();
-  var records = [];
-  for (var i = 1; i < data.length; i++) {
-    if (!data[i][1]) continue;
-    records.push({
-      id: i,
-      className: String(data[i][0]),
-      studentId: String(data[i][1]),
-      studentName: String(data[i][2]),
-      checkinTime: String(data[i][3]),
-      checkoutTime: data[i][4] ? String(data[i][4]) : null
-    });
-  }
-
-  var settings = getSettingsMap(setSheet);
-  var isCheckoutOpen = settings["isCheckoutOpen"] === "true";
-  var googleFormUrl = settings["googleFormUrl"] || "https://docs.google.com/forms/";
-
-  var result = {
-    status: "success",
-    records: records,
-    isCheckoutOpen: isCheckoutOpen,
-    googleFormUrl: googleFormUrl
-  };
-
-  return ContentService.createTextOutput(JSON.stringify(result))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-function doPost(e) {
-  try {
-    var contents = JSON.parse(e.postData.contents);
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var recSheet = getOrCreateSheet(ss, "簽到紀錄", ["班級", "學號", "姓名", "簽到時間", "簽退時間"]);
-    var setSheet = getOrCreateSheet(ss, "系統設定", ["Key", "Value"]);
-
-    var action = contents.action;
-
-    if (action === "checkin") {
-      recSheet.appendRow([
-        contents.className || '',
-        contents.studentId || '',
-        contents.studentName || '',
-        contents.checkinTime || '',
-        ''
-      ]);
-    } else if (action === "checkout") {
-      var data = recSheet.getDataRange().getValues();
-      for (var i = 1; i < data.length; i++) {
-        if (String(data[i][1]) === String(contents.studentId)) {
-          recSheet.getRange(i + 1, 5).setValue(contents.checkoutTime || new Date().toLocaleTimeString());
-          break;
-        }
-      }
-    } else if (action === "toggleCheckout") {
-      setSetting(setSheet, "isCheckoutOpen", String(contents.isOpen));
-    } else if (action === "saveGFormUrl") {
-      setSetting(setSheet, "googleFormUrl", contents.googleFormUrl || '');
-    } else if (action === "clearData") {
-      recSheet.clearContents();
-      recSheet.appendRow(["班級", "學號", "姓名", "簽到時間", "簽退時間"]);
-    }
-
-    return ContentService.createTextOutput(JSON.stringify({ status: "success" }))
-      .setMimeType(ContentService.MimeType.JSON);
-  } catch (err) {
-    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: err.toString() }))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-}
-
-function getOrCreateSheet(ss, name, headers) {
-  var sheet = ss.getSheetByName(name);
-  if (!sheet) {
-    sheet = ss.insertSheet(name);
-    sheet.appendRow(headers);
-  }
-  return sheet;
-}
-
-function getSettingsMap(sheet) {
-  var data = sheet.getDataRange().getValues();
-  var map = {};
-  for (var i = 1; i < data.length; i++) {
-    if (data[i][0]) map[data[i][0]] = String(data[i][1]);
-  }
-  return map;
-}
-
-function setSetting(sheet, key, value) {
-  var data = sheet.getDataRange().getValues();
-  for (var i = 1; i < data.length; i++) {
-    if (data[i][0] === key) {
-      sheet.getRange(i + 1, 2).setValue(value);
-      return;
-    }
-  }
-  sheet.appendRow([key, value]);
-}</code></pre>
           </div>
         </div>
       </div>
@@ -549,7 +426,6 @@ function setSetting(sheet, key, value) {
   </div>
 
   <script>
-    // 全域狀態管理與預設 Webhook 網址 (換裝置免重新輸入)
     const DEFAULT_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxQOQHrJj_7N1qfB0mzPsAvlh923IMTPHwYFnXBYSwZUYL9zEmq0Y4ET49Hpf0hdtaY/exec";
     let records = []; 
     let isCheckoutOpen = false; 
@@ -558,16 +434,13 @@ function setSetting(sheet, key, value) {
     let syncInterval = null;
     let isAdminAuthenticated = false;
 
-    // 頁面初始化
     window.onload = function() {
       loadLocalData();
       updateCheckoutStateUI();
       renderAdminTable();
 
-      // 自動發起雲端同步
       if (webhookUrl) {
         fetchCloudData(false);
-        // 每 15 秒自動跟雲端同步一次，確保多裝置同步
         syncInterval = setInterval(() => {
           fetchCloudData(false);
         }, 15000);
@@ -576,7 +449,6 @@ function setSetting(sheet, key, value) {
       }
     };
 
-    // 更新雲端連動狀態指示器
     function updateCloudStatus(status) {
       const badge = document.getElementById('status-cloud-badge');
       const icon = document.getElementById('cloud-icon');
@@ -603,7 +475,6 @@ function setSetting(sheet, key, value) {
       }
     }
 
-    // 從 GAS 獲取最新全班資料與設定 (doGet)
     async function fetchCloudData(showNotification = true) {
       if (!webhookUrl) {
         if (showNotification) showModal('提示', '請先至後台設定 Google Web App 網址！', 'warning');
@@ -614,7 +485,6 @@ function setSetting(sheet, key, value) {
       updateCloudStatus('syncing');
 
       try {
-        // 動態加上時間戳記避開瀏覽器快取
         const cacheBustUrl = `${webhookUrl}${webhookUrl.includes('?') ? '&' : '?'}t=${Date.now()}`;
         const res = await fetch(cacheBustUrl);
         const data = await res.json();
@@ -647,8 +517,23 @@ function setSetting(sheet, key, value) {
       }
     }
 
-    // 發送動作指令至 GAS (doPost)
-    // 本地快取 localStorage 與預設 Webhook
+    async function sendGasAction(action, data = {}) {
+      if (!webhookUrl) return;
+      try {
+        updateCloudStatus('syncing');
+        const payload = JSON.stringify({ action: action, ...data });
+        await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: payload
+        });
+        setTimeout(() => fetchCloudData(false), 1000);
+      } catch (err) {
+        console.error("sendGasAction error:", err);
+        updateCloudStatus('error');
+      }
+    }
+
     function saveLocalData() {
       localStorage.setItem('attendance_records', JSON.stringify(records));
       localStorage.setItem('attendance_checkout_open', JSON.stringify(isCheckoutOpen));
@@ -662,7 +547,6 @@ function setSetting(sheet, key, value) {
       const savedGForm = localStorage.getItem('attendance_gform_url');
       const savedWebhook = localStorage.getItem('attendance_webhook_url');
 
-      // 解析 URL 參數 (如：?api=https://...)
       const urlParams = new URLSearchParams(window.location.search);
       const urlApi = urlParams.get('api') || urlParams.get('webhook');
 
@@ -673,7 +557,6 @@ function setSetting(sheet, key, value) {
         document.getElementById('input-gform-url').value = savedGForm;
       }
 
-      // 優先順序：URL 參數 > 歷史儲存 (localStorage) > 預設 Webhook 網址
       if (urlApi) {
         webhookUrl = urlApi;
         localStorage.setItem('attendance_webhook_url', urlApi);
@@ -684,12 +567,9 @@ function setSetting(sheet, key, value) {
       }
 
       const inputWebhook = document.getElementById('input-webhook-url');
-      if (inputWebhook) {
-        inputWebhook.value = webhookUrl;
-      }
+      if (inputWebhook) inputWebhook.value = webhookUrl;
     }
 
-    // 切換 Tab 頁籤
     function switchTab(tabName) {
       if (tabName === 'admin' && !isAdminAuthenticated) {
         openAdminAuthModal();
@@ -701,37 +581,25 @@ function setSetting(sheet, key, value) {
         const btn = document.getElementById(`nav-${t}`);
         const panel = document.getElementById(`panel-${t}`);
         
-        if (panel) {
-          if (t === tabName) {
-            panel.classList.remove('hidden');
-          } else {
-            panel.classList.add('hidden');
-          }
-        }
+        if (panel) panel.classList.toggle('hidden', t !== tabName);
 
         if (btn) {
-          if (t === tabName) {
-            btn.className = "flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 bg-indigo-600 text-white shadow-sm flex items-center justify-center gap-2";
-          } else {
-            btn.className = "flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 text-slate-600 hover:text-slate-900 hover:bg-white/60 flex items-center justify-center gap-2 relative";
-          }
+          btn.className = t === tabName 
+            ? "flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 bg-indigo-600 text-white shadow-sm flex items-center justify-center gap-2"
+            : "flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 text-slate-600 hover:text-slate-900 hover:bg-white/60 flex items-center justify-center gap-2 relative";
         }
       });
 
       const secretBtn = document.getElementById('nav-admin-secret');
       if (secretBtn) {
-        if (tabName === 'admin') {
-          secretBtn.className = "w-7 h-7 rounded-lg text-indigo-600 bg-indigo-50 border border-indigo-200 flex items-center justify-center transition-colors text-xs";
-        } else {
-          secretBtn.className = "w-7 h-7 rounded-lg text-slate-300 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center transition-colors text-xs";
-        }
+        secretBtn.className = tabName === 'admin'
+          ? "w-7 h-7 rounded-lg text-indigo-600 bg-indigo-50 border border-indigo-200 flex items-center justify-center transition-colors text-xs"
+          : "w-7 h-7 rounded-lg text-slate-300 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center transition-colors text-xs";
       }
 
-      // 切換頁籤時自動重整一次雲端資料
       if (webhookUrl) fetchCloudData(false);
     }
 
-    // 後台切換簽退權限開關
     function toggleCheckoutStatus(isOpen) {
       isCheckoutOpen = isOpen;
       updateCheckoutStateUI();
@@ -739,7 +607,6 @@ function setSetting(sheet, key, value) {
       sendGasAction('toggleCheckout', { isOpen: isOpen });
     }
 
-    // 更新簽退權限 UI 呈現
     function updateCheckoutStateUI() {
       const badge = document.getElementById('status-checkout-badge');
       const lockIcon = document.getElementById('tab-lock-icon');
@@ -753,7 +620,6 @@ function setSetting(sheet, key, value) {
       if (isCheckoutOpen) {
         badge.className = "px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 bg-emerald-50 text-emerald-600 border border-emerald-200";
         badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span><span>簽退開放中</span>`;
-        
         lockIcon.className = "text-[10px] bg-emerald-100 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded ml-1";
         lockIcon.innerHTML = `<i class="fa-solid fa-lock-open"></i>`;
 
@@ -767,7 +633,6 @@ function setSetting(sheet, key, value) {
       } else {
         badge.className = "px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 bg-rose-50 text-rose-600 border border-rose-200";
         badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-500"></span><span>簽退未開放</span>`;
-        
         lockIcon.className = "text-[10px] bg-rose-100 text-rose-600 border border-rose-200 px-1.5 py-0.5 rounded ml-1";
         lockIcon.innerHTML = `<i class="fa-solid fa-lock"></i>`;
 
@@ -781,19 +646,16 @@ function setSetting(sheet, key, value) {
       }
     }
 
-    // 處理簽到提交
     async function handleCheckin(e) {
       e.preventDefault();
-      const selectedClass = document.getElementById('checkin-class').value;
-      if (!selectedClass) {
+      const className = document.getElementById('checkin-class').value;
+      if (!className) {
         showModal('請選擇班級', '請選擇您的班級名稱後再進行簽到！', 'warning');
         return;
       }
-      const className = selectedClass;
       const studentId = document.getElementById('checkin-id').value.trim();
       const studentName = document.getElementById('checkin-name').value.trim();
 
-      // 檢查是否已重複簽到
       const existing = records.find(r => String(r.studentId) === String(studentId));
       if (existing) {
         showModal('簽到提醒', `學號【${studentId}】已經於 ${existing.checkinTime} 完成簽到，無需重複登記！`, 'warning');
@@ -815,11 +677,8 @@ function setSetting(sheet, key, value) {
       records.unshift(newRecord);
       saveLocalData();
       renderAdminTable();
-
-      // 發送至 GAS 雲端
       sendGasAction('checkin', newRecord);
 
-      // 重置表單
       document.getElementById('checkin-class').value = '';
       document.getElementById('checkin-id').value = '';
       document.getElementById('checkin-name').value = '';
@@ -827,7 +686,6 @@ function setSetting(sheet, key, value) {
       showModal('簽到成功！', `恭喜 ${studentName} (${className}) 完成簽到登記！`, 'success');
     }
 
-    // 開啟外接 Google 問卷
     function openGoogleForm() {
       if (!googleFormUrl) {
         showModal('提示', '後台尚未設定 Google 問卷網址。', 'warning');
@@ -836,7 +694,6 @@ function setSetting(sheet, key, value) {
       window.open(googleFormUrl, '_blank');
     }
 
-    // 處理簽退提交
     async function handleCheckout(e) {
       e.preventDefault();
       const studentId = document.getElementById('checkout-id').value.trim();
@@ -864,12 +721,7 @@ function setSetting(sheet, key, value) {
 
       saveLocalData();
       renderAdminTable();
-
-      // 發送至 GAS 雲端
-      sendGasAction('checkout', {
-        studentId: studentId,
-        checkoutTime: timeString
-      });
+      sendGasAction('checkout', { studentId: studentId, checkoutTime: timeString });
 
       document.getElementById('checkout-id').value = '';
       document.getElementById('survey-confirmed').checked = false;
@@ -877,7 +729,6 @@ function setSetting(sheet, key, value) {
       showModal('簽退成功！', `${record.studentName} 學員已成功完成課堂簽退與問卷提交，祝您學習愉快！`, 'success');
     }
 
-    // 渲染後台資料表格與統計
     function renderAdminTable() {
       const tbody = document.getElementById('admin-table-body');
       const searchKeyword = document.getElementById('admin-search-input').value.trim().toLowerCase();
@@ -918,7 +769,6 @@ function setSetting(sheet, key, value) {
       `).join('');
     }
 
-    // 儲存 Google 問卷網址設定
     function saveGFormUrl() {
       const url = document.getElementById('input-gform-url').value.trim();
       if (url) {
@@ -929,7 +779,6 @@ function setSetting(sheet, key, value) {
       }
     }
 
-    // 儲存 Webhook 網址並立即拉取雲端資料
     function saveWebhookUrl() {
       const url = document.getElementById('input-webhook-url').value.trim();
       webhookUrl = url;
@@ -939,15 +788,12 @@ function setSetting(sheet, key, value) {
       if (webhookUrl) {
         fetchCloudData(true);
         if (syncInterval) clearInterval(syncInterval);
-        syncInterval = setInterval(() => {
-          fetchCloudData(false);
-        }, 15000);
+        syncInterval = setInterval(() => { fetchCloudData(false); }, 15000);
       } else {
         updateCloudStatus('unlinked');
       }
     }
 
-    // 匯出 CSV 檔案
     function exportCSV() {
       if (records.length === 0) {
         showModal('提示', '目前尚無任何簽到紀錄可供匯出。', 'warning');
@@ -970,7 +816,6 @@ function setSetting(sheet, key, value) {
       document.body.removeChild(link);
     }
 
-    // 清空紀錄 (同時清空雲端)
     function clearDemoData() {
       records = [];
       saveLocalData();
@@ -979,33 +824,6 @@ function setSetting(sheet, key, value) {
       showModal('已清空', '所有簽到紀錄與雲端資料已成功重置。', 'success');
     }
 
-    // 本地快取 localStorage
-    function saveLocalData() {
-      localStorage.setItem('attendance_records', JSON.stringify(records));
-      localStorage.setItem('attendance_checkout_open', JSON.stringify(isCheckoutOpen));
-      localStorage.setItem('attendance_gform_url', googleFormUrl);
-      localStorage.setItem('attendance_webhook_url', webhookUrl);
-    }
-
-    function loadLocalData() {
-      const savedRecords = localStorage.getItem('attendance_records');
-      const savedCheckoutOpen = localStorage.getItem('attendance_checkout_open');
-      const savedGForm = localStorage.getItem('attendance_gform_url');
-      const savedWebhook = localStorage.getItem('attendance_webhook_url');
-
-      if (savedRecords) records = JSON.parse(savedRecords);
-      if (savedCheckoutOpen !== null) isCheckoutOpen = JSON.parse(savedCheckoutOpen);
-      if (savedGForm) {
-        googleFormUrl = savedGForm;
-        document.getElementById('input-gform-url').value = savedGForm;
-      }
-      if (savedWebhook) {
-        webhookUrl = savedWebhook;
-        document.getElementById('input-webhook-url').value = savedWebhook;
-      }
-    }
-
-    // Modal 控制邏輯
     function showModal(title, message, type = 'success') {
       const modal = document.getElementById('modal-alert');
       const card = document.getElementById('modal-card');
@@ -1040,16 +858,13 @@ function setSetting(sheet, key, value) {
     }
 
     function openGasModal() {
-      const modal = document.getElementById('modal-gas');
-      modal.classList.remove('opacity-0', 'pointer-events-none');
+      document.getElementById('modal-gas').classList.remove('opacity-0', 'pointer-events-none');
     }
 
     function closeGasModal() {
-      const modal = document.getElementById('modal-gas');
-      modal.classList.add('opacity-0', 'pointer-events-none');
+      document.getElementById('modal-gas').classList.add('opacity-0', 'pointer-events-none');
     }
 
-    // 後台密碼驗證 Modal 控制
     function openAdminAuthModal() {
       const modal = document.getElementById('modal-admin-auth');
       const card = document.getElementById('modal-admin-card');
