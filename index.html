@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="h-full bg-slate-50">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>學員簽到簽退與問卷管理系統</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Font: Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background-color: #cbd5e1;
+      border-radius: 9999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background-color: #f1f5f9;
+    }
+  </style>
+</head>
+<body class="h-full text-slate-800 bg-slate-50 flex flex-col justify-between custom-scrollbar selection:bg-indigo-500 selection:text-white antialiased">
+
+  <div class="min-h-screen flex flex-col">
+    <!-- 頂部頁首 (明亮風格) -->
+    <header class="border-b border-slate-200/80 bg-white/90 backdrop-blur-md sticky top-0 z-30 shadow-sm">
+      <div class="max-w-4xl mx-auto px-4 py-3.5 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-600/20">
+            <i class="fa-solid fa-user-check text-lg"></i>
+          </div>
+          <div>
+            <h1 class="text-base sm:text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
+              學員簽到簽退與問卷系統
+            </h1>
+            <p class="text-xs text-slate-500">Class Attendance & Survey System</p>
+          </div>
+        </div>
+
+        <!-- 開放狀態標籤 (動態) 與隱藏後台入口 -->
+        <div class="flex items-center gap-2">
+          <!-- 雲端同步狀態標籤 -->
+          <div id="status-cloud-badge" onclick="fetchCloudData(true)" class="px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 bg-slate-100 text-slate-600 border border-slate-200 cursor-pointer hover:bg-slate-200 transition" title="點擊手動同步雲端資料">
+            <i class="fa-solid fa-cloud text-slate-400" id="cloud-icon"></i>
+            <span id="cloud-status-text">未連動</span>
+          </div>
+
+          <div id="status-checkout-badge" class="px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 bg-rose-50 text-rose-600 border border-rose-200">
+            <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+            <span>簽退未開放</span>
+          </div>
+          <!-- 開發者隱藏後台按鈕 (微型灰色齒輪圖示) -->
+          <button id="nav-admin-secret" onclick="switchTab('admin')" title="後台管理控制台" class="w-7 h-7 rounded-lg text-slate-300 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center transition-colors text-xs">
+            <i class="fa-solid fa-gear"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 主要內容區 -->
+    <main class="flex-grow max-w-3xl mx-auto w-full px-4 py-6 sm:py-8 flex flex-col">
+      
+      <!-- 功能頁籤分頁按鈕 (僅保留學員用的簽到與簽退) -->
+      <nav class="bg-slate-200/60 p-1.5 rounded-2xl border border-slate-200 flex gap-1 mb-6">
+        <button id="nav-checkin" onclick="switchTab('checkin')" class="flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 bg-indigo-600 text-white shadow-sm flex items-center justify-center gap-2">
+          <i class="fa-solid fa-signature"></i>
+          <span>學員簽到</span>
+        </button>
+        <button id="nav-checkout" onclick="switchTab('checkout')" class="flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 text-slate-600 hover:text-slate-900 hover:bg-white/60 flex items-center justify-center gap-2 relative">
+          <i class="fa-solid fa-right-from-bracket"></i>
+          <span>學員簽退</span>
+          <span id="tab-lock-icon" class="text-[10px] bg-rose-100 text-rose-600 border border-rose-200 px-1.5 py-0.5 rounded ml-1"><i class="fa-solid fa-lock"></i></span>
+        </button>
+      </nav>
+
+      <!-- 1. 學員簽到頁面 -->
+      <section id="panel-checkin" class="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+        <div class="border-b border-slate-100 pb-4">
+          <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+            <i class="fa-solid fa-pen-to-square text-indigo-600"></i>
+            課堂簽到登記
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-500 mt-1">請選擇您的班級並填寫學號與姓名完成上課簽到。</p>
+        </div>
+
+        <form onsubmit="handleCheckin(event)" class="space-y-5">
+          <!-- 班級 (必填下拉選單) -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <label for="checkin-class" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                班級名稱 <span class="text-rose-500">*</span>
+              </label>
+            </div>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <i class="fa-solid fa-graduation-cap"></i>
+              </span>
+              <select id="checkin-class" required class="w-full pl-10 pr-8 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 text-slate-800 text-sm transition appearance-none cursor-pointer">
+                <option value="">-- 請選擇班級 --</option>
+                <option value="數遊一甲">數遊一甲</option>
+                <option value="數遊一乙">數遊一乙</option>
+                <option value="數遊二甲">數遊二甲</option>
+                <option value="數遊二乙">數遊二乙</option>
+                <option value="數遊三甲">數遊三甲</option>
+                <option value="數遊三乙">數遊三乙</option>
+                <option value="數遊四甲">數遊四甲</option>
+                <option value="數遊四乙">數遊四乙</option>
+              </select>
+              <span class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400 text-xs">
+                <i class="fa-solid fa-chevron-down"></i>
+              </span>
+            </div>
+          </div>
+
+          <!-- 學號 -->
+          <div>
+            <label for="checkin-id" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+              學號 <span class="text-rose-500">*</span>
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <i class="fa-solid fa-id-card"></i>
+              </span>
+              <input type="text" id="checkin-id" required placeholder="例如：11108201" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 text-slate-800 placeholder-slate-400 text-sm transition font-mono">
+            </div>
+          </div>
+
+          <!-- 姓名 -->
+          <div>
+            <label for="checkin-name" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+              姓名 <span class="text-rose-500">*</span>
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <i class="fa-solid fa-user"></i>
+              </span>
+              <input type="text" id="checkin-name" required placeholder="例如：陳大明" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 text-slate-800 placeholder-slate-400 text-sm transition">
+            </div>
+          </div>
+
+          <button type="submit" id="btn-checkin-submit" class="w-full py-3.5 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-md shadow-indigo-600/15 flex items-center justify-center gap-2 transition duration-200 active:scale-[0.99]">
+            <i class="fa-solid fa-check-circle"></i>
+            <span>確認簽到簽入</span>
+          </button>
+        </form>
+      </section>
+
+      <!-- 2. 學員簽退與問卷頁面 -->
+      <section id="panel-checkout" class="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6 hidden">
+        
+        <!-- 簽退關閉狀態顯示 -->
+        <div id="checkout-locked-view" class="text-center py-10 px-4 space-y-4">
+          <div class="w-16 h-16 mx-auto rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-500 text-2xl">
+            <i class="fa-solid fa-lock"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-slate-900">簽退功能尚未開放</h3>
+            <p class="text-slate-500 text-xs sm:text-sm mt-1.5 max-w-md mx-auto leading-relaxed">
+              目前講師或管理員尚未開啟簽退權限。請專心聽課，課堂結束提示後再進行簽退與填寫問卷！
+            </p>
+          </div>
+          <div class="pt-2">
+            <button onclick="switchTab('checkin')" class="px-5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
+              返回簽到頁面
+            </button>
+          </div>
+        </div>
+
+        <!-- 簽退開放狀態表單 -->
+        <div id="checkout-open-view" class="space-y-6 hidden">
+          <div class="border-b border-slate-100 pb-4">
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold mb-2">
+              <i class="fa-solid fa-door-open"></i>
+              <span>簽退功能開放中</span>
+            </div>
+            <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-clipboard-check text-emerald-600"></i>
+              簽退與填寫回饋問卷
+            </h2>
+            <p class="text-xs sm:text-sm text-slate-500 mt-1">請輸入學號核對，並點擊下方連結完成 Google 問卷填寫。</p>
+          </div>
+
+          <!-- 外接 Google 問卷橫幅引導區 -->
+          <div class="bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-100 rounded-2xl p-5 space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="flex items-start gap-3.5">
+                <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 text-lg shadow-sm">
+                  <i class="fa-solid fa-square-poll-vertical"></i>
+                </div>
+                <div>
+                  <h4 class="text-sm font-bold text-slate-900">步驟 1：填寫 Google 問卷調查</h4>
+                  <p class="text-xs text-slate-600 mt-0.5">點擊右側按鈕開啟 Google 表單，完成填寫課堂回饋。</p>
+                </div>
+              </div>
+              <button type="button" onclick="openGoogleForm()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition shadow-md shadow-indigo-600/15 shrink-0">
+                <span>開啟 Google 問卷</span>
+                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- 簽退表單 -->
+          <form onsubmit="handleCheckout(event)" class="space-y-5">
+            <div>
+              <label for="checkout-id" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                學號驗證 <span class="text-rose-500">*</span>
+              </label>
+              <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <i class="fa-solid fa-id-card"></i>
+                </span>
+                <input type="text" id="checkout-id" required placeholder="請輸入您簽到時的學號" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 text-slate-800 placeholder-slate-400 text-sm font-mono transition">
+              </div>
+            </div>
+
+            <!-- 完成問卷確認勾選 -->
+            <div class="flex items-center gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <input type="checkbox" id="survey-confirmed" required class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500/20 border-slate-300 cursor-pointer">
+              <label for="survey-confirmed" class="text-xs text-slate-700 cursor-pointer select-none">
+                我確認已經前往完成外接的 <span class="text-indigo-600 font-semibold">Google 問卷調查</span> 填寫 <span class="text-rose-500">*</span>
+              </label>
+            </div>
+
+            <button type="submit" id="btn-checkout-submit" class="w-full py-3.5 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md shadow-emerald-600/15 flex items-center justify-center gap-2 transition duration-200 active:scale-[0.99]">
+              <i class="fa-solid fa-right-from-bracket"></i>
+              <span>送出簽退登記</span>
+            </button>
+          </form>
+        </div>
+
+      </section>
+
+      <!-- 3. 後台管理控制台 -->
+      <section id="panel-admin" class="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6 hidden">
+        <div class="border-b border-slate-100 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-sliders text-indigo-600"></i>
+              管理員控制台
+            </h2>
+            <p class="text-xs sm:text-sm text-slate-500 mt-1">控制簽退開放時機、設定問卷網址與查看簽到名單。</p>
+          </div>
+          <button onclick="openGasModal()" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-xs font-semibold text-slate-700 flex items-center gap-2 transition w-fit">
+            <i class="fa-solid fa-code text-indigo-600"></i>
+            <span>Google 試算表連動設定</span>
+          </button>
+        </div>
+
+        <!-- 後台核心控制卡片區 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- 簽退開關控制 -->
+          <div class="bg-slate-50 border border-slate-200 p-5 rounded-2xl flex items-center justify-between">
+            <div class="space-y-1">
+              <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">簽退權限開關</div>
+              <div id="admin-checkout-status-text" class="text-sm font-bold text-rose-600">目前狀態：關閉鎖定中</div>
+              <div class="text-[11px] text-slate-400">切換後學員即可進行簽退作業</div>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="toggle-checkout-switch" onchange="toggleCheckoutStatus(this.checked)" class="sr-only peer">
+              <div class="w-13 h-7 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-600"></div>
+            </label>
+          </div>
+
+          <!-- Google 問卷網址設定 -->
+          <div class="bg-slate-50 border border-slate-200 p-5 rounded-2xl space-y-2">
+            <label for="input-gform-url" class="block text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              外接 Google 問卷網址
+            </label>
+            <div class="flex gap-2">
+              <input type="url" id="input-gform-url" placeholder="https://docs.google.com/forms/..." class="flex-grow px-3 py-2 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 text-xs text-slate-800 placeholder-slate-400 font-mono">
+              <button onclick="saveGFormUrl()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold transition shrink-0">
+                儲存
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 數據指標卡片 -->
+        <div class="grid grid-cols-3 gap-3 sm:gap-4">
+          <div class="bg-slate-50 border border-slate-200 p-4 rounded-2xl text-center">
+            <div class="text-xs text-slate-500 font-medium">應到 / 簽到人數</div>
+            <div id="stat-total-checkin" class="text-2xl font-black text-indigo-600 mt-1">0</div>
+          </div>
+          <div class="bg-slate-50 border border-slate-200 p-4 rounded-2xl text-center">
+            <div class="text-xs text-slate-500 font-medium">已簽退人數</div>
+            <div id="stat-total-checkout" class="text-2xl font-black text-emerald-600 mt-1">0</div>
+          </div>
+          <div class="bg-slate-50 border border-slate-200 p-4 rounded-2xl text-center">
+            <div class="text-xs text-slate-500 font-medium">離場率</div>
+            <div id="stat-checkout-rate" class="text-2xl font-black text-cyan-600 mt-1">0%</div>
+          </div>
+        </div>
+
+        <!-- 搜尋與導出操作列 -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div class="relative w-full sm:w-64">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 text-xs">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </span>
+            <input type="text" id="admin-search-input" oninput="renderAdminTable()" placeholder="搜尋姓名 / 學號 / 班級..." class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:bg-white text-xs text-slate-800 placeholder-slate-400">
+          </div>
+
+          <div class="flex items-center gap-2 w-full sm:w-auto">
+            <button onclick="exportCSV()" class="flex-1 sm:flex-none px-4 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition">
+              <i class="fa-solid fa-file-excel text-emerald-600"></i>
+              <span>匯出 Excel (CSV)</span>
+            </button>
+            <button onclick="clearDemoData()" class="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-xs font-semibold transition" title="清空紀錄">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- 簽到紀錄表格 -->
+        <div class="overflow-x-auto rounded-2xl border border-slate-200 custom-scrollbar">
+          <table class="w-full text-left text-xs text-slate-700">
+            <thead class="bg-slate-100 text-slate-600 uppercase text-[10px] tracking-wider border-b border-slate-200">
+              <tr>
+                <th class="py-3 px-4">班級</th>
+                <th class="py-3 px-4">學號</th>
+                <th class="py-3 px-4">姓名</th>
+                <th class="py-3 px-4">簽到時間</th>
+                <th class="py-3 px-4">簽退時間</th>
+                <th class="py-3 px-4">狀態</th>
+              </tr>
+            </thead>
+            <tbody id="admin-table-body" class="divide-y divide-slate-100 bg-white">
+              <!-- 動態渲染數據 -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- 頁尾 -->
+    <footer class="border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-400">
+      <p>© 2026 學員簽到簽退與問卷管理系統 • 明亮極簡版</p>
+    </footer>
+  </div>
+
+  <!-- 通用提示 Modal (代替原生 alert) -->
+  <div id="modal-alert" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 opacity-0 pointer-events-none transition-opacity duration-200">
+    <div id="modal-card" class="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 max-w-sm w-full text-center shadow-xl transform scale-95 transition-transform duration-200 space-y-4">
+      <div id="modal-icon-container" class="w-14 h-14 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center text-xl mx-auto">
+        <i id="modal-icon" class="fa-solid fa-check"></i>
+      </div>
+      <div>
+        <h3 id="modal-title" class="text-base font-bold text-slate-900">訊息提示</h3>
+        <p id="modal-message" class="text-xs sm:text-sm text-slate-500 mt-1.5 leading-relaxed">提示內容...</p>
+      </div>
+      <button onclick="closeModal()" class="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition shadow-md shadow-indigo-600/10">
+        確定關閉
+      </button>
+    </div>
+  </div>
+
+  <!-- 後台密碼驗證 Modal -->
+  <div id="modal-admin-auth" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 opacity-0 pointer-events-none transition-opacity duration-200">
+    <div id="modal-admin-card" class="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 max-w-sm w-full text-center shadow-xl transform scale-95 transition-transform duration-200 space-y-4">
+      <div class="w-14 h-14 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center text-xl mx-auto">
+        <i class="fa-solid fa-user-shield"></i>
+      </div>
+      <div>
+        <h3 class="text-base font-bold text-slate-900">管理員身份驗證</h3>
+        <p class="text-xs text-slate-500 mt-1">請輸入管理員密碼進入控制台</p>
+      </div>
+      <form onsubmit="handleAdminAuth(event)" class="space-y-3">
+        <div>
+          <input type="password" id="admin-password-input" placeholder="請輸入密碼" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:bg-white text-center text-sm tracking-widest font-mono">
+          <p id="admin-auth-error" class="text-xs text-rose-500 mt-1 hidden font-medium">密碼錯誤，請重新輸入！</p>
+        </div>
+        <div class="flex gap-2">
+          <button type="button" onclick="closeAdminAuthModal()" class="flex-1 py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-xs transition">
+            取消
+          </button>
+          <button type="submit" class="flex-1 py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition shadow-md shadow-indigo-600/10">
+            解鎖登入
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Google Apps Script 教學與設定 Modal -->
+  <div id="modal-gas" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 opacity-0 pointer-events-none transition-opacity duration-200">
+    <div class="bg-white border border-slate-200 rounded-3xl p-6 max-w-2xl w-full shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-cloud-arrow-up text-indigo-600"></i>
+          Google 試算表 (Google Sheets) 全裝置雙向同步設定
+        </h3>
+        <button onclick="closeGasModal()" class="text-slate-400 hover:text-slate-600 text-sm px-2">✕</button>
+      </div>
+      
+      <div class="space-y-3 text-xs text-slate-600 overflow-y-auto custom-scrollbar pr-2 flex-grow">
+        <p class="text-slate-500">貼上此 GAS 程式碼後部署為網頁應用程式（權限設為<b>「所有人/Anyone」</b>），即可實現所有手機與電腦間的<b>實時同步簽到簽退</b>！</p>
+
+        <!-- Webhook 輸入框 -->
+        <div class="space-y-1 pt-1">
+          <label class="block text-[11px] font-semibold text-indigo-600 uppercase">1. 填入您的 Google Apps Script Web App 網址：</label>
+          <div class="flex gap-2">
+            <input type="url" id="input-webhook-url" placeholder="https://script.google.com/macros/s/.../exec" class="flex-grow px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 font-mono text-slate-800 text-xs">
+            <button onclick="saveWebhookUrl()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold transition shrink-0">儲存並立即同步</button>
+          </div>
+        </div>
+
+        <div class="space-y-1">
+          <label class="block text-[11px] font-semibold text-indigo-600 uppercase">2. 全功能 GAS 後端程式碼（同時支援讀取與寫入）：</label>
+          <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 font-mono text-[11px] text-emerald-400 overflow-x-auto">
+<pre><code>// GAS 後端核心 - 支援跨裝置同步與設定存取
+function doGet(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var recSheet = getOrCreateSheet(ss, "簽到紀錄", ["班級", "學號", "姓名", "簽到時間", "簽退時間"]);
+  var setSheet = getOrCreateSheet(ss, "系統設定", ["Key", "Value"]);
+
+  var data = recSheet.getDataRange().getValues();
+  var records = [];
+  for (var i = 1; i < data.length; i++) {
+    if (!data[i][1]) continue;
+    records.push({
+      id: i,
+      className: String(data[i][0]),
+      studentId: String(data[i][1]),
+      studentName: String(data[i][2]),
+      checkinTime: String(data[i][3]),
+      checkoutTime: data[i][4] ? String(data[i][4]) : null
+    });
+  }
+
+  var settings = getSettingsMap(setSheet);
+  var isCheckoutOpen = settings["isCheckoutOpen"] === "true";
+  var googleFormUrl = settings["googleFormUrl"] || "https://docs.google.com/forms/";
+
+  var result = {
+    status: "success",
+    records: records,
+    isCheckoutOpen: isCheckoutOpen,
+    googleFormUrl: googleFormUrl
+  };
+
+  return ContentService.createTextOutput(JSON.stringify(result))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  try {
+    var contents = JSON.parse(e.postData.contents);
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var recSheet = getOrCreateSheet(ss, "簽到紀錄", ["班級", "學號", "姓名", "簽到時間", "簽退時間"]);
+    var setSheet = getOrCreateSheet(ss, "系統設定", ["Key", "Value"]);
+
+    var action = contents.action;
+
+    if (action === "checkin") {
+      recSheet.appendRow([
+        contents.className || '',
+        contents.studentId || '',
+        contents.studentName || '',
+        contents.checkinTime || '',
+        ''
+      ]);
+    } else if (action === "checkout") {
+      var data = recSheet.getDataRange().getValues();
+      for (var i = 1; i < data.length; i++) {
+        if (String(data[i][1]) === String(contents.studentId)) {
+          recSheet.getRange(i + 1, 5).setValue(contents.checkoutTime || new Date().toLocaleTimeString());
+          break;
+        }
+      }
+    } else if (action === "toggleCheckout") {
+      setSetting(setSheet, "isCheckoutOpen", String(contents.isOpen));
+    } else if (action === "saveGFormUrl") {
+      setSetting(setSheet, "googleFormUrl", contents.googleFormUrl || '');
+    } else if (action === "clearData") {
+      recSheet.clearContents();
+      recSheet.appendRow(["班級", "學號", "姓名", "簽到時間", "簽退時間"]);
+    }
+
+    return ContentService.createTextOutput(JSON.stringify({ status: "success" }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function getOrCreateSheet(ss, name, headers) {
+  var sheet = ss.getSheetByName(name);
+  if (!sheet) {
+    sheet = ss.insertSheet(name);
+    sheet.appendRow(headers);
+  }
+  return sheet;
+}
+
+function getSettingsMap(sheet) {
+  var data = sheet.getDataRange().getValues();
+  var map = {};
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][0]) map[data[i][0]] = String(data[i][1]);
+  }
+  return map;
+}
+
+function setSetting(sheet, key, value) {
+  var data = sheet.getDataRange().getValues();
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][0] === key) {
+      sheet.getRange(i + 1, 2).setValue(value);
+      return;
+    }
+  }
+  sheet.appendRow([key, value]);
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-2 border-t border-slate-100 flex justify-end">
+        <button onclick="closeGasModal()" class="px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold">關閉視窗</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 全域狀態管理與預設 Webhook 網址 (換裝置免重新輸入)
+    const DEFAULT_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxQOQHrJj_7N1qfB0mzPsAvlh923IMTPHwYFnXBYSwZUYL9zEmq0Y4ET49Hpf0hdtaY/exec";
+    let records = []; 
+    let isCheckoutOpen = false; 
+    let googleFormUrl = "https://docs.google.com/forms/"; 
+    let webhookUrl = DEFAULT_WEBHOOK_URL; 
+    let syncInterval = null;
+    let isAdminAuthenticated = false;
+
+    // 頁面初始化
+    window.onload = function() {
+      loadLocalData();
+      updateCheckoutStateUI();
+      renderAdminTable();
+
+      // 自動發起雲端同步
+      if (webhookUrl) {
+        fetchCloudData(false);
+        // 每 15 秒自動跟雲端同步一次，確保多裝置同步
+        syncInterval = setInterval(() => {
+          fetchCloudData(false);
+        }, 15000);
+      } else {
+        updateCloudStatus('unlinked');
+      }
+    };
+
+    // 更新雲端連動狀態指示器
+    function updateCloudStatus(status) {
+      const badge = document.getElementById('status-cloud-badge');
+      const icon = document.getElementById('cloud-icon');
+      const text = document.getElementById('cloud-status-text');
+
+      if (!badge || !icon || !text) return;
+
+      if (status === 'syncing') {
+        badge.className = "px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 bg-indigo-50 text-indigo-600 border border-indigo-200 cursor-pointer";
+        icon.className = "fa-solid fa-arrows-rotate animate-spin text-indigo-500";
+        text.innerText = "同步中...";
+      } else if (status === 'synced') {
+        badge.className = "px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 bg-emerald-50 text-emerald-600 border border-emerald-200 cursor-pointer";
+        icon.className = "fa-solid fa-cloud-check text-emerald-500";
+        text.innerText = "已同步雲端";
+      } else if (status === 'error') {
+        badge.className = "px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 bg-rose-50 text-rose-600 border border-rose-200 cursor-pointer";
+        icon.className = "fa-solid fa-cloud-exclamation text-rose-500";
+        text.innerText = "連線失敗";
+      } else {
+        badge.className = "px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 bg-slate-100 text-slate-600 border border-slate-200 cursor-pointer hover:bg-slate-200 transition";
+        icon.className = "fa-solid fa-cloud text-slate-400";
+        text.innerText = "未連動";
+      }
+    }
+
+    // 從 GAS 獲取最新全班資料與設定 (doGet)
+    async function fetchCloudData(showNotification = true) {
+      if (!webhookUrl) {
+        if (showNotification) showModal('提示', '請先至後台設定 Google Web App 網址！', 'warning');
+        updateCloudStatus('unlinked');
+        return;
+      }
+
+      updateCloudStatus('syncing');
+
+      try {
+        // 動態加上時間戳記避開瀏覽器快取
+        const cacheBustUrl = `${webhookUrl}${webhookUrl.includes('?') ? '&' : '?'}t=${Date.now()}`;
+        const res = await fetch(cacheBustUrl);
+        const data = await res.json();
+
+        if (data && data.status === 'success') {
+          records = data.records || [];
+          isCheckoutOpen = !!data.isCheckoutOpen;
+          if (data.googleFormUrl) {
+            googleFormUrl = data.googleFormUrl;
+            document.getElementById('input-gform-url').value = googleFormUrl;
+          }
+
+          saveLocalData();
+          updateCheckoutStateUI();
+          renderAdminTable();
+          updateCloudStatus('synced');
+
+          if (showNotification) {
+            showModal('同步成功', '已順利從 Google 雲端載入最新簽到紀錄與設定！', 'success');
+          }
+        } else {
+          updateCloudStatus('error');
+        }
+      } catch (err) {
+        console.error("Cloud fetch error:", err);
+        updateCloudStatus('error');
+        if (showNotification) {
+          showModal('同步失敗', '無法連接至 Google 試算表，請檢查網址或權限設定！', 'error');
+        }
+      }
+    }
+
+    // 發送動作指令至 GAS (doPost)
+    // 本地快取 localStorage 與預設 Webhook
+    function saveLocalData() {
+      localStorage.setItem('attendance_records', JSON.stringify(records));
+      localStorage.setItem('attendance_checkout_open', JSON.stringify(isCheckoutOpen));
+      localStorage.setItem('attendance_gform_url', googleFormUrl);
+      localStorage.setItem('attendance_webhook_url', webhookUrl);
+    }
+
+    function loadLocalData() {
+      const savedRecords = localStorage.getItem('attendance_records');
+      const savedCheckoutOpen = localStorage.getItem('attendance_checkout_open');
+      const savedGForm = localStorage.getItem('attendance_gform_url');
+      const savedWebhook = localStorage.getItem('attendance_webhook_url');
+
+      // 解析 URL 參數 (如：?api=https://...)
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlApi = urlParams.get('api') || urlParams.get('webhook');
+
+      if (savedRecords) records = JSON.parse(savedRecords);
+      if (savedCheckoutOpen !== null) isCheckoutOpen = JSON.parse(savedCheckoutOpen);
+      if (savedGForm) {
+        googleFormUrl = savedGForm;
+        document.getElementById('input-gform-url').value = savedGForm;
+      }
+
+      // 優先順序：URL 參數 > 歷史儲存 (localStorage) > 預設 Webhook 網址
+      if (urlApi) {
+        webhookUrl = urlApi;
+        localStorage.setItem('attendance_webhook_url', urlApi);
+      } else if (savedWebhook) {
+        webhookUrl = savedWebhook;
+      } else {
+        webhookUrl = DEFAULT_WEBHOOK_URL;
+      }
+
+      const inputWebhook = document.getElementById('input-webhook-url');
+      if (inputWebhook) {
+        inputWebhook.value = webhookUrl;
+      }
+    }
+
+    // 切換 Tab 頁籤
+    function switchTab(tabName) {
+      if (tabName === 'admin' && !isAdminAuthenticated) {
+        openAdminAuthModal();
+        return;
+      }
+
+      const tabs = ['checkin', 'checkout', 'admin'];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`nav-${t}`);
+        const panel = document.getElementById(`panel-${t}`);
+        
+        if (panel) {
+          if (t === tabName) {
+            panel.classList.remove('hidden');
+          } else {
+            panel.classList.add('hidden');
+          }
+        }
+
+        if (btn) {
+          if (t === tabName) {
+            btn.className = "flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 bg-indigo-600 text-white shadow-sm flex items-center justify-center gap-2";
+          } else {
+            btn.className = "flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 text-slate-600 hover:text-slate-900 hover:bg-white/60 flex items-center justify-center gap-2 relative";
+          }
+        }
+      });
+
+      const secretBtn = document.getElementById('nav-admin-secret');
+      if (secretBtn) {
+        if (tabName === 'admin') {
+          secretBtn.className = "w-7 h-7 rounded-lg text-indigo-600 bg-indigo-50 border border-indigo-200 flex items-center justify-center transition-colors text-xs";
+        } else {
+          secretBtn.className = "w-7 h-7 rounded-lg text-slate-300 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center transition-colors text-xs";
+        }
+      }
+
+      // 切換頁籤時自動重整一次雲端資料
+      if (webhookUrl) fetchCloudData(false);
+    }
+
+    // 後台切換簽退權限開關
+    function toggleCheckoutStatus(isOpen) {
+      isCheckoutOpen = isOpen;
+      updateCheckoutStateUI();
+      saveLocalData();
+      sendGasAction('toggleCheckout', { isOpen: isOpen });
+    }
+
+    // 更新簽退權限 UI 呈現
+    function updateCheckoutStateUI() {
+      const badge = document.getElementById('status-checkout-badge');
+      const lockIcon = document.getElementById('tab-lock-icon');
+      const lockedView = document.getElementById('checkout-locked-view');
+      const openView = document.getElementById('checkout-open-view');
+      const statusText = document.getElementById('admin-checkout-status-text');
+      const switchInput = document.getElementById('toggle-checkout-switch');
+
+      if (switchInput) switchInput.checked = isCheckoutOpen;
+
+      if (isCheckoutOpen) {
+        badge.className = "px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 bg-emerald-50 text-emerald-600 border border-emerald-200";
+        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span><span>簽退開放中</span>`;
+        
+        lockIcon.className = "text-[10px] bg-emerald-100 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded ml-1";
+        lockIcon.innerHTML = `<i class="fa-solid fa-lock-open"></i>`;
+
+        lockedView.classList.add('hidden');
+        openView.classList.remove('hidden');
+
+        if (statusText) {
+          statusText.innerText = "目前狀態：開放簽退中";
+          statusText.className = "text-sm font-bold text-emerald-600";
+        }
+      } else {
+        badge.className = "px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 bg-rose-50 text-rose-600 border border-rose-200";
+        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-500"></span><span>簽退未開放</span>`;
+        
+        lockIcon.className = "text-[10px] bg-rose-100 text-rose-600 border border-rose-200 px-1.5 py-0.5 rounded ml-1";
+        lockIcon.innerHTML = `<i class="fa-solid fa-lock"></i>`;
+
+        lockedView.classList.remove('hidden');
+        openView.classList.add('hidden');
+
+        if (statusText) {
+          statusText.innerText = "目前狀態：關閉鎖定中";
+          statusText.className = "text-sm font-bold text-rose-600";
+        }
+      }
+    }
+
+    // 處理簽到提交
+    async function handleCheckin(e) {
+      e.preventDefault();
+      const selectedClass = document.getElementById('checkin-class').value;
+      if (!selectedClass) {
+        showModal('請選擇班級', '請選擇您的班級名稱後再進行簽到！', 'warning');
+        return;
+      }
+      const className = selectedClass;
+      const studentId = document.getElementById('checkin-id').value.trim();
+      const studentName = document.getElementById('checkin-name').value.trim();
+
+      // 檢查是否已重複簽到
+      const existing = records.find(r => String(r.studentId) === String(studentId));
+      if (existing) {
+        showModal('簽到提醒', `學號【${studentId}】已經於 ${existing.checkinTime} 完成簽到，無需重複登記！`, 'warning');
+        return;
+      }
+
+      const now = new Date();
+      const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+      const newRecord = {
+        id: Date.now(),
+        className: className,
+        studentId: studentId,
+        studentName: studentName,
+        checkinTime: timeString,
+        checkoutTime: null
+      };
+
+      records.unshift(newRecord);
+      saveLocalData();
+      renderAdminTable();
+
+      // 發送至 GAS 雲端
+      sendGasAction('checkin', newRecord);
+
+      // 重置表單
+      document.getElementById('checkin-class').value = '';
+      document.getElementById('checkin-id').value = '';
+      document.getElementById('checkin-name').value = '';
+
+      showModal('簽到成功！', `恭喜 ${studentName} (${className}) 完成簽到登記！`, 'success');
+    }
+
+    // 開啟外接 Google 問卷
+    function openGoogleForm() {
+      if (!googleFormUrl) {
+        showModal('提示', '後台尚未設定 Google 問卷網址。', 'warning');
+        return;
+      }
+      window.open(googleFormUrl, '_blank');
+    }
+
+    // 處理簽退提交
+    async function handleCheckout(e) {
+      e.preventDefault();
+      const studentId = document.getElementById('checkout-id').value.trim();
+      const surveyConfirmed = document.getElementById('survey-confirmed').checked;
+
+      if (!surveyConfirmed) {
+        showModal('問卷未勾選', '請點擊開啟 Google 問卷完成填寫，並勾選確認方可進行簽退！', 'warning');
+        return;
+      }
+
+      const record = records.find(r => String(r.studentId) === String(studentId));
+      if (!record) {
+        showModal('查無簽到紀錄', `找不到學號【${studentId}】的簽到紀錄，請確認輸入是否正確或先前往簽到！`, 'error');
+        return;
+      }
+
+      if (record.checkoutTime) {
+        showModal('重複簽退', `學號【${studentId}】已經於 ${record.checkoutTime} 完成簽退，請勿重複提交！`, 'warning');
+        return;
+      }
+
+      const now = new Date();
+      const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      record.checkoutTime = timeString;
+
+      saveLocalData();
+      renderAdminTable();
+
+      // 發送至 GAS 雲端
+      sendGasAction('checkout', {
+        studentId: studentId,
+        checkoutTime: timeString
+      });
+
+      document.getElementById('checkout-id').value = '';
+      document.getElementById('survey-confirmed').checked = false;
+
+      showModal('簽退成功！', `${record.studentName} 學員已成功完成課堂簽退與問卷提交，祝您學習愉快！`, 'success');
+    }
+
+    // 渲染後台資料表格與統計
+    function renderAdminTable() {
+      const tbody = document.getElementById('admin-table-body');
+      const searchKeyword = document.getElementById('admin-search-input').value.trim().toLowerCase();
+
+      const totalCheckin = records.length;
+      const totalCheckout = records.filter(r => r.checkoutTime !== null && r.checkoutTime !== '').length;
+      const checkoutRate = totalCheckin > 0 ? Math.round((totalCheckout / totalCheckin) * 100) : 0;
+
+      document.getElementById('stat-total-checkin').innerText = totalCheckin;
+      document.getElementById('stat-total-checkout').innerText = totalCheckout;
+      document.getElementById('stat-checkout-rate').innerText = checkoutRate + '%';
+
+      const filtered = records.filter(r => 
+        (r.studentName && r.studentName.toLowerCase().includes(searchKeyword)) ||
+        (r.studentId && String(r.studentId).toLowerCase().includes(searchKeyword)) ||
+        (r.className && r.className.toLowerCase().includes(searchKeyword))
+      );
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400 font-normal">尚無符合條件的簽到紀錄</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(r => `
+        <tr class="hover:bg-slate-50 transition">
+          <td class="py-3 px-4 font-medium ${r.className === '未填寫' ? 'text-slate-400' : 'text-slate-800'}">${r.className || '未填寫'}</td>
+          <td class="py-3 px-4 font-mono text-indigo-600 font-medium">${r.studentId}</td>
+          <td class="py-3 px-4 font-bold text-slate-900">${r.studentName}</td>
+          <td class="py-3 px-4 text-slate-500 font-mono">${r.checkinTime}</td>
+          <td class="py-3 px-4 text-slate-500 font-mono">${r.checkoutTime || '<span class="text-slate-300">-</span>'}</td>
+          <td class="py-3 px-4">
+            ${r.checkoutTime 
+              ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-600 border border-emerald-200">已簽退</span>`
+              : `<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-50 text-indigo-600 border border-indigo-200">上課中</span>`
+            }
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // 儲存 Google 問卷網址設定
+    function saveGFormUrl() {
+      const url = document.getElementById('input-gform-url').value.trim();
+      if (url) {
+        googleFormUrl = url;
+        saveLocalData();
+        sendGasAction('saveGFormUrl', { googleFormUrl: url });
+        showModal('設定成功', 'Google 問卷網址已更新並同步至雲端！', 'success');
+      }
+    }
+
+    // 儲存 Webhook 網址並立即拉取雲端資料
+    function saveWebhookUrl() {
+      const url = document.getElementById('input-webhook-url').value.trim();
+      webhookUrl = url;
+      saveLocalData();
+      closeGasModal();
+
+      if (webhookUrl) {
+        fetchCloudData(true);
+        if (syncInterval) clearInterval(syncInterval);
+        syncInterval = setInterval(() => {
+          fetchCloudData(false);
+        }, 15000);
+      } else {
+        updateCloudStatus('unlinked');
+      }
+    }
+
+    // 匯出 CSV 檔案
+    function exportCSV() {
+      if (records.length === 0) {
+        showModal('提示', '目前尚無任何簽到紀錄可供匯出。', 'warning');
+        return;
+      }
+
+      let csvContent = "\uFEFF班級,學號,姓名,簽到時間,簽退時間,狀態\n";
+      records.forEach(r => {
+        const status = r.checkoutTime ? "已簽退" : "上課中";
+        csvContent += `"${r.className || '未填寫'}","${r.studentId}","${r.studentName}","${r.checkinTime}","${r.checkoutTime || ''}","${status}"\n`;
+      });
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `課堂簽到簽退名單_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // 清空紀錄 (同時清空雲端)
+    function clearDemoData() {
+      records = [];
+      saveLocalData();
+      renderAdminTable();
+      sendGasAction('clearData');
+      showModal('已清空', '所有簽到紀錄與雲端資料已成功重置。', 'success');
+    }
+
+    // 本地快取 localStorage
+    function saveLocalData() {
+      localStorage.setItem('attendance_records', JSON.stringify(records));
+      localStorage.setItem('attendance_checkout_open', JSON.stringify(isCheckoutOpen));
+      localStorage.setItem('attendance_gform_url', googleFormUrl);
+      localStorage.setItem('attendance_webhook_url', webhookUrl);
+    }
+
+    function loadLocalData() {
+      const savedRecords = localStorage.getItem('attendance_records');
+      const savedCheckoutOpen = localStorage.getItem('attendance_checkout_open');
+      const savedGForm = localStorage.getItem('attendance_gform_url');
+      const savedWebhook = localStorage.getItem('attendance_webhook_url');
+
+      if (savedRecords) records = JSON.parse(savedRecords);
+      if (savedCheckoutOpen !== null) isCheckoutOpen = JSON.parse(savedCheckoutOpen);
+      if (savedGForm) {
+        googleFormUrl = savedGForm;
+        document.getElementById('input-gform-url').value = savedGForm;
+      }
+      if (savedWebhook) {
+        webhookUrl = savedWebhook;
+        document.getElementById('input-webhook-url').value = savedWebhook;
+      }
+    }
+
+    // Modal 控制邏輯
+    function showModal(title, message, type = 'success') {
+      const modal = document.getElementById('modal-alert');
+      const card = document.getElementById('modal-card');
+      const iconContainer = document.getElementById('modal-icon-container');
+      const icon = document.getElementById('modal-icon');
+
+      document.getElementById('modal-title').innerText = title;
+      document.getElementById('modal-message').innerText = message;
+
+      if (type === 'success') {
+        iconContainer.className = "w-14 h-14 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center text-xl mx-auto";
+        icon.className = "fa-solid fa-check";
+      } else if (type === 'warning') {
+        iconContainer.className = "w-14 h-14 rounded-2xl bg-amber-50 border border-amber-100 text-amber-600 flex items-center justify-center text-xl mx-auto";
+        icon.className = "fa-solid fa-triangle-exclamation";
+      } else {
+        iconContainer.className = "w-14 h-14 rounded-2xl bg-rose-50 border border-rose-100 text-rose-600 flex items-center justify-center text-xl mx-auto";
+        icon.className = "fa-solid fa-xmark";
+      }
+
+      modal.classList.remove('opacity-0', 'pointer-events-none');
+      card.classList.remove('scale-95');
+      card.classList.add('scale-100');
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('modal-alert');
+      const card = document.getElementById('modal-card');
+      modal.classList.add('opacity-0', 'pointer-events-none');
+      card.classList.remove('scale-100');
+      card.classList.add('scale-95');
+    }
+
+    function openGasModal() {
+      const modal = document.getElementById('modal-gas');
+      modal.classList.remove('opacity-0', 'pointer-events-none');
+    }
+
+    function closeGasModal() {
+      const modal = document.getElementById('modal-gas');
+      modal.classList.add('opacity-0', 'pointer-events-none');
+    }
+
+    // 後台密碼驗證 Modal 控制
+    function openAdminAuthModal() {
+      const modal = document.getElementById('modal-admin-auth');
+      const card = document.getElementById('modal-admin-card');
+      const input = document.getElementById('admin-password-input');
+      const errText = document.getElementById('admin-auth-error');
+      if (input) input.value = '';
+      if (errText) errText.classList.add('hidden');
+      modal.classList.remove('opacity-0', 'pointer-events-none');
+      card.classList.remove('scale-95');
+      card.classList.add('scale-100');
+      setTimeout(() => input && input.focus(), 100);
+    }
+
+    function closeAdminAuthModal() {
+      const modal = document.getElementById('modal-admin-auth');
+      const card = document.getElementById('modal-admin-card');
+      modal.classList.add('opacity-0', 'pointer-events-none');
+      card.classList.remove('scale-100');
+      card.classList.add('scale-95');
+    }
+
+    function handleAdminAuth(e) {
+      e.preventDefault();
+      const pwd = document.getElementById('admin-password-input').value.trim();
+      const errText = document.getElementById('admin-auth-error');
+      if (pwd === '4341') {
+        isAdminAuthenticated = true;
+        closeAdminAuthModal();
+        switchTab('admin');
+      } else {
+        if (errText) errText.classList.remove('hidden');
+        document.getElementById('admin-password-input').value = '';
+        document.getElementById('admin-password-input').focus();
+      }
+    }
+  </script>
+</body>
+</html>
